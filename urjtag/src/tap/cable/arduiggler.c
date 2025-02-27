@@ -83,10 +83,18 @@ arduiggler_connect (urj_cable_t *cable, const urj_param_t *params[])
     params_t *cable_params;
 
     /* perform urj_tap_cable_generic_usbconn_connect */
-    if (urj_tap_cable_generic_usbconn_connect (cable, params) != URJ_STATUS_OK)
+    if (urj_tap_cable_generic_usbconn_connect (cable, params) != URJ_STATUS_OK){
+        urj_log (URJ_LOG_LEVEL_ERROR,
+                 _("Arduiggler connection failed!.\n"));
         return URJ_STATUS_FAIL;
 
+    }
+
     cable_params = malloc (sizeof (*cable_params));
+
+    urj_log (URJ_LOG_LEVEL_NORMAL,
+      _("Arduiggler malloc successful\n"));
+
     if (!cable_params)
     {
         urj_error_set (URJ_ERROR_OUT_OF_MEMORY, _("malloc(%zd) fails"),
@@ -101,6 +109,9 @@ arduiggler_connect (urj_cable_t *cable, const urj_param_t *params[])
     }
 
     urj_tap_cable_cx_cmd_init (&cable_params->cmd_root);
+
+    urj_log (URJ_LOG_LEVEL_NORMAL,
+      _("Arduiggler urj_tap_cable_cx_cmd_init successful\n"));
 
     /* exchange generic cable parameters with our private parameter set */
     free (cable->params);
@@ -118,20 +129,27 @@ arduiggler_init (urj_cable_t *cable)
     if (urj_tap_usbconn_open (cable->link.usb) != URJ_STATUS_OK)
         return URJ_STATUS_FAIL;
 
+    urj_warning (_("arduiggler init usbconnopen successful\n"));
+
+    
     /* need to change the default baud rate from libftdi.c
      * to the actual one used by the cable
      */
-/*
+
     ftdi_param_t *fp = cable->link.usb->params;
     int r = ftdi_set_baudrate(fp->fc, BAUD_RATE);
+    urj_warning (_("arduiggler init setbaudrate successful\n"));
+
 
     if (r != 0) {
         urj_warning (_("cannot change baud rate\n"));
         return URJ_STATUS_FAIL;
     }
-*/
+
     urj_tap_cable_cx_cmd_queue (cmd_root, 0);
     urj_tap_cable_cx_cmd_push (cmd_root, CMD_RESET);
+    urj_warning (_("arduiggler init cmd reset push successful\n"));
+
     urj_tap_cable_cx_xfer (cmd_root, NULL, cable, URJ_TAP_CABLE_COMPLETELY);
 
     int ar_status = arduiggler_get_status(cable);
